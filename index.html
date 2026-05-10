@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>PulseX AI - CoinGecko Live</title>
+<title>PulseX AI Smart Engine</title>
 
 <style>
 body{
@@ -42,17 +42,16 @@ header{
 <body>
 
 <header>
-PulseX AI 🚀 CoinGecko Live Signals
+PulseX AI 🚀 Smart Market Engine
 </header>
 
-<div class="container" id="app">Loading market data...</div>
+<div class="container" id="app">Loading...</div>
 
 <script>
 
-const API = "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=volume_desc&per_page=50&page=1";
+const coins = ["WAI","SENTIS","WBAI","ST","TA","TTD"];
 
-// العملات المطلوبة
-const watchlist = ["wai","sentis","wbai","st","ta","ttd"];
+const API = "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=volume_desc&per_page=100&page=1";
 
 async function load(){
 
@@ -61,42 +60,41 @@ async function load(){
 
   let html="";
 
-  watchlist.forEach(symbol => {
+  coins.forEach(symbol => {
 
-    let coin = data.find(c => c.symbol.toLowerCase() === symbol);
+    let coin = data.find(c => c.symbol.toLowerCase() === symbol.toLowerCase());
 
     if(!coin){
       html += `
         <div class="card">
-          <b>${symbol.toUpperCase()}</b><br>
+          <b>${symbol}</b><br>
           ❌ Not found on CoinGecko<br>
-          <div class="small">May not be listed or symbol is different</div>
-        </div>
-      `;
+          <div class="small">No reliable data available</div>
+        </div>`;
       return;
     }
 
     let change = coin.price_change_percentage_24h || 0;
     let volume = coin.total_volume;
 
-    let score = Math.min(100, Math.abs(change)*6 + (volume/1e9));
+    let momentum = Math.min(100, Math.abs(change)*5 + (volume/1e9));
 
-    let entry = (coin.current_price * (1 - Math.random()*0.03)).toFixed(6);
-    let target = (coin.current_price * (1 + Math.random()*0.06)).toFixed(6);
+    let zone = coin.current_price * (1 - 0.03);
+    let target = coin.current_price * (1 + 0.06);
 
-    let signal = "";
+    let status = "";
     let color = "";
 
-    if(score > 75){
-      signal = "🚀 Strong Momentum Zone";
+    if(momentum > 70){
+      status = "🚀 High Momentum (Possible Move Soon)";
       color = "green";
     }
-    else if(score > 50){
-      signal = "⚡ Watch Breakout";
+    else if(momentum > 50){
+      status = "⚡ Watch Zone";
       color = "orange";
     }
     else{
-      signal = "⚠️ Weak Movement";
+      status = "⚠️ Low Activity";
       color = "red";
     }
 
@@ -105,16 +103,15 @@ async function load(){
         <b>${coin.symbol.toUpperCase()}</b><br><br>
 
         💰 Price: $${coin.current_price}<br>
-        📊 24h: ${change.toFixed(2)}%<br>
-        📦 Volume: ${volume.toLocaleString()}<br><br>
+        📊 24h: ${change.toFixed(2)}%<br><br>
 
-        📍 Entry: $${entry}<br>
-        🎯 Target: $${target}<br><br>
+        📍 Entry Zone: $${zone.toFixed(6)}<br>
+        🎯 Target Zone: $${target.toFixed(6)}<br><br>
 
-        Score: ${score.toFixed(1)}<br>
-        <span class="${color}">${signal}</span><br><br>
+        Momentum: ${momentum.toFixed(1)}<br>
+        <span class="${color}">${status}</span><br><br>
 
-        <div class="small">Live data from CoinGecko</div>
+        <div class="small">Data: CoinGecko • No time prediction (not possible)</div>
       </div>
     `;
   });
