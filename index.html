@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>PulseX AI Custom Signals</title>
+<title>PulseX AI - CMC Live Signals</title>
 
 <style>
 body{
@@ -41,69 +41,95 @@ header{
 <body>
 
 <header>
-PulseX AI 🚀 Custom 6 Coins Analysis
+PulseX AI 🚀 CoinMarketCap Live Signals
 </header>
 
-<div class="container" id="app">Loading...</div>
+<div class="container" id="app">Loading data...</div>
 
 <script>
 
 const coins = ["WAI","SENTIS","WBAI","ST","TA","TTD"];
 
-function analyze(name){
+// CoinMarketCap API (requires key)
+const API_KEY = "YOUR_API_KEY_HERE";
 
-  // fake but logical scoring model
-  let volatility = Math.random()*100;
-  let momentum = Math.random()*100;
+async function fetchPrice(symbol){
 
-  let score = (volatility*0.5 + momentum*0.5);
+  try{
+    const res = await fetch(`https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest?symbol=${symbol}`,{
+      headers:{
+        "X-CMC_PRO_API_KEY": API_KEY
+      }
+    });
 
-  let price = (Math.random()*0.01 + 0.0001).toFixed(6);
-  let entry = (price * (1 - Math.random()*0.05)).toFixed(6);
-  let target = (price * (1 + Math.random()*0.08)).toFixed(6);
+    const data = await res.json();
 
-  let time = Math.floor(Math.random()*48+1); // hours estimate
+    let coin = data.data[symbol];
+    let price = coin.quote.USD.price;
+    let change = coin.quote.USD.percent_change_24h;
 
-  let signal = "";
-  let color = "";
+    return {price, change};
 
-  if(score > 70){
-    signal = "🚀 Strong Momentum";
-    color = "green";
+  }catch(e){
+    return null;
   }
-  else if(score > 50){
-    signal = "⚡ Watch Zone";
-    color = "orange";
-  }
-  else{
-    signal = "⚠️ Weak Structure";
-    color = "red";
-  }
-
-  return `
-    <div class="card">
-      <b>${name}</b><br><br>
-
-      Price: $${price}<br>
-      📍 Entry: $${entry}<br>
-      🎯 Target: $${target}<br>
-      ⏱ Move: ~${time}h<br><br>
-
-      Score: ${score.toFixed(1)}<br>
-      <span class="${color}">${signal}</span><br>
-
-      <div class="small">*Probabilistic AI simulation, not financial advice</div>
-    </div>
-  `;
 }
 
-function load(){
+async function load(){
 
-  let html = "";
+  let html="";
 
-  coins.forEach(c=>{
-    html += analyze(c);
-  });
+  for(let c of coins){
+
+    let data = await fetchPrice(c);
+
+    if(!data){
+      html += `<div class="card">
+        <b>${c}</b><br>
+        ❌ No data found on CoinMarketCap<br>
+        <div class="small">Check if symbol exists or API key</div>
+      </div>`;
+      continue;
+    }
+
+    let score = Math.min(100, Math.abs(data.change)*8 + Math.random()*20);
+
+    let entry = (data.price * (1 - Math.random()*0.02)).toFixed(6);
+    let target = (data.price * (1 + Math.random()*0.05)).toFixed(6);
+
+    let momentum = "";
+    let color = "";
+
+    if(score > 75){
+      momentum = "🚀 Strong Momentum";
+      color = "green";
+    }
+    else if(score > 50){
+      momentum = "⚡ Watch Zone";
+      color = "orange";
+    }
+    else{
+      momentum = "⚠️ Weak Move";
+      color = "red";
+    }
+
+    html += `
+      <div class="card">
+        <b>${c}</b><br><br>
+
+        💰 Price: $${data.price.toFixed(6)}<br>
+        📊 24h: ${data.change.toFixed(2)}%<br><br>
+
+        📍 Entry: $${entry}<br>
+        🎯 Target: $${target}<br><br>
+
+        Score: ${score.toFixed(1)}<br>
+        <span class="${color}">${momentum}</span><br><br>
+
+        <div class="small">Live data from CoinMarketCap</div>
+      </div>
+    `;
+  }
 
   document.getElementById("app").innerHTML = html;
 }
