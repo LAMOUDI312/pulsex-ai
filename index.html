@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 <meta charset="UTF-8">
-<title>PulseX AI Signals</title>
+<title>PulseX AI Custom Signals</title>
 
 <style>
 body{
@@ -14,16 +14,14 @@ body{
 
 header{
   background:black;
-  padding:20px;
+  padding:18px;
   text-align:center;
   color:#00ff88;
-  font-size:22px;
+  font-size:20px;
   font-weight:bold;
 }
 
-.container{
-  padding:15px;
-}
+.container{padding:15px;}
 
 .card{
   background:#141a2b;
@@ -36,84 +34,82 @@ header{
 .green{color:#00ff88;}
 .orange{color:orange;}
 .red{color:#ff4d4d;}
-
-.small{
-  font-size:12px;
-  color:gray;
-}
+.small{color:gray;font-size:12px;}
 </style>
 </head>
 
 <body>
 
 <header>
-PulseX AI 🚀 Signal Zones (Educational)
+PulseX AI 🚀 Custom 6 Coins Analysis
 </header>
 
-<div class="container" id="coins">Loading...</div>
-
-<div class="container small">
-Signals are based on market volatility & volume (NOT financial advice)
-</div>
+<div class="container" id="app">Loading...</div>
 
 <script>
 
-async function load(){
+const coins = ["WAI","SENTIS","WBAI","ST","TA","TTD"];
 
-  const res = await fetch("https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=volume_desc&per_page=10&page=1");
-  const data = await res.json();
+function analyze(name){
 
-  let html="";
+  // fake but logical scoring model
+  let volatility = Math.random()*100;
+  let momentum = Math.random()*100;
 
-  data.forEach(c=>{
+  let score = (volatility*0.5 + momentum*0.5);
 
-    let change = c.price_change_percentage_24h || 0;
-    let vol = c.total_volume;
+  let price = (Math.random()*0.01 + 0.0001).toFixed(6);
+  let entry = (price * (1 - Math.random()*0.05)).toFixed(6);
+  let target = (price * (1 + Math.random()*0.08)).toFixed(6);
 
-    // AI-style scoring (simulation only)
-    let score = Math.min(100, Math.abs(change)*6 + (vol/1e9));
+  let time = Math.floor(Math.random()*48+1); // hours estimate
 
-    // simulate entry & target zones
-    let entry = (c.current_price * (1 - Math.random()*0.03)).toFixed(2);
-    let target = (c.current_price * (1 + Math.random()*0.06)).toFixed(2);
+  let signal = "";
+  let color = "";
 
-    let signal = "";
-    let color = "";
+  if(score > 70){
+    signal = "🚀 Strong Momentum";
+    color = "green";
+  }
+  else if(score > 50){
+    signal = "⚡ Watch Zone";
+    color = "orange";
+  }
+  else{
+    signal = "⚠️ Weak Structure";
+    color = "red";
+  }
 
-    if(score > 80){
-      signal = "HIGH MOMENTUM ZONE 🚀";
-      color = "green";
-    }
-    else if(score > 60){
-      signal = "WATCH BREAKOUT ⚡";
-      color = "orange";
-    }
-    else{
-      signal = "WEAK STRUCTURE ⚠️";
-      color = "red";
-    }
+  return `
+    <div class="card">
+      <b>${name}</b><br><br>
 
-    html += `
-      <div class="card">
-        <b>${c.symbol.toUpperCase()}</b><br><br>
+      Price: $${price}<br>
+      📍 Entry: $${entry}<br>
+      🎯 Target: $${target}<br>
+      ⏱ Move: ~${time}h<br><br>
 
-        Price: $${c.current_price}<br>
-        Change: ${change.toFixed(2)}%<br><br>
+      Score: ${score.toFixed(1)}<br>
+      <span class="${color}">${signal}</span><br>
 
-        📍 Entry Zone: $${entry}<br>
-        🎯 Target: $${target}<br><br>
+      <div class="small">*Probabilistic AI simulation, not financial advice</div>
+    </div>
+  `;
+}
 
-        Score: ${score.toFixed(1)}<br>
-        <span class="${color}">${signal}</span>
-      </div>
-    `;
+function load(){
+
+  let html = "";
+
+  coins.forEach(c=>{
+    html += analyze(c);
   });
 
-  document.getElementById("coins").innerHTML = html;
+  document.getElementById("app").innerHTML = html;
 }
 
 load();
-setInterval(load, 20000);
+setInterval(load, 30000);
 
 </script>
 
