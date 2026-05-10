@@ -8,27 +8,33 @@
 body{
   margin:0;
   font-family:Arial;
-  background:#0b0f1a;
+  background:#0a0f1f;
   color:white;
 }
 
 header{
   background:#000;
-  padding:18px;
+  padding:20px;
   text-align:center;
   color:#00ff88;
   font-size:22px;
   font-weight:bold;
 }
 
+.topbar{
+  display:flex;
+  justify-content:center;
+  gap:10px;
+  margin:10px;
+}
+
 button{
   background:#00ff88;
   border:none;
-  padding:10px 15px;
-  margin:10px;
+  padding:10px 14px;
   border-radius:8px;
-  cursor:pointer;
   font-weight:bold;
+  cursor:pointer;
 }
 
 .container{
@@ -36,55 +42,76 @@ button{
 }
 
 .card{
-  background:#151a2b;
-  padding:12px;
+  background:#141a2b;
+  padding:14px;
   margin:10px 0;
   border-radius:12px;
   border:1px solid #222;
+  transition:0.3s;
+}
+
+.card:hover{
+  transform:scale(1.02);
 }
 
 .green{color:#00ff88;}
 .orange{color:orange;}
 .red{color:#ff4d4d;}
+
+.small{
+  font-size:12px;
+  color:gray;
+}
 </style>
 </head>
 
 <body>
 
-<header>PulseX AI 🚀 LIVE WEB APP</header>
+<header>
+PulseX AI 🚀 Pro Trading Scanner
+</header>
 
-<div style="text-align:center;">
-<button onclick="loadData()">🔄 Refresh Data</button>
+<div class="topbar">
+<button onclick="loadData()">🔄 Refresh</button>
+<button onclick="autoToggle()">⚡ Auto Mode</button>
 </div>
 
-<div class="container" id="coins">Loading...</div>
+<div class="container" id="coins">Loading market...</div>
+
+<div class="container small">
+Data powered by CoinGecko • AI Score Simulation
+</div>
 
 <script>
-async function loadData(){
-  document.getElementById("coins").innerHTML = "Loading market data...";
+let auto = true;
 
-  const res = await fetch("https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=volume_desc&per_page=8&page=1");
+async function loadData(){
+
+  const res = await fetch("https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=volume_desc&per_page=10&page=1");
   const data = await res.json();
 
   let html="";
 
   data.forEach(c=>{
 
-    let score = Math.min(100, Math.abs(c.price_change_percentage_24h||0)*6 + (c.total_volume/1e9));
+    let change = c.price_change_percentage_24h || 0;
+    let volume = c.total_volume;
 
-    let signal = "Weak";
-    let color = "orange";
+    let score = Math.min(100, Math.abs(change)*7 + (volume/1e9));
+
+    let signal = "";
+    let color = "";
 
     if(score > 80){
-      signal = "🚀 Strong Pump";
+      signal = "🚀 STRONG PUMP ZONE";
       color = "green";
     }
     else if(score > 60){
-      signal = "⚡ Breakout";
+      signal = "⚡ BREAKOUT POSSIBLE";
       color = "orange";
     }
     else{
-      signal = "⚠️ Weak Movement";
+      signal = "⚠️ LOW MOMENTUM";
       color = "red";
     }
 
@@ -92,9 +119,9 @@ async function loadData(){
       <div class="card">
         <b>${c.symbol.toUpperCase()}</b><br>
         Price: $${c.current_price}<br>
-        Volume: ${c.total_volume}<br>
-        Change: ${c.price_change_percentage_24h?.toFixed(2)}%<br>
-        Score: ${score.toFixed(1)}<br>
+        Volume: ${volume.toLocaleString()}<br>
+        24h: ${change.toFixed(2)}%<br>
+        <b>Score: ${score.toFixed(1)}</b><br>
         <span class="${color}">${signal}</span>
       </div>
     `;
@@ -103,8 +130,19 @@ async function loadData(){
   document.getElementById("coins").innerHTML = html;
 }
 
+function autoToggle(){
+  auto = !auto;
+  alert(auto ? "Auto Mode ON" : "Auto Mode OFF");
+}
+
 loadData();
-setInterval(loadData, 30000);
+
+setInterval(()=>{
+  if(auto){
+    loadData();
+  }
+}, 20000);
+
 </script>
 
 </body>
