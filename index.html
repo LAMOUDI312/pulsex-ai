@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>PulseX AI - CMC Live Signals</title>
+<title>PulseX AI - CoinGecko Live</title>
 
 <style>
 body{
@@ -34,6 +34,7 @@ header{
 .green{color:#00ff88;}
 .orange{color:orange;}
 .red{color:#ff4d4d;}
+
 .small{color:gray;font-size:12px;}
 </style>
 </head>
@@ -41,95 +42,82 @@ header{
 <body>
 
 <header>
-PulseX AI 🚀 CoinMarketCap Live Signals
+PulseX AI 🚀 CoinGecko Live Signals
 </header>
 
-<div class="container" id="app">Loading data...</div>
+<div class="container" id="app">Loading market data...</div>
 
 <script>
 
-const coins = ["WAI","SENTIS","WBAI","ST","TA","TTD"];
+const API = "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=volume_desc&per_page=50&page=1";
 
-// CoinMarketCap API (requires key)
-const API_KEY = "YOUR_API_KEY_HERE";
-
-async function fetchPrice(symbol){
-
-  try{
-    const res = await fetch(`https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest?symbol=${symbol}`,{
-      headers:{
-        "X-CMC_PRO_API_KEY": API_KEY
-      }
-    });
-
-    const data = await res.json();
-
-    let coin = data.data[symbol];
-    let price = coin.quote.USD.price;
-    let change = coin.quote.USD.percent_change_24h;
-
-    return {price, change};
-
-  }catch(e){
-    return null;
-  }
-}
+// العملات المطلوبة
+const watchlist = ["wai","sentis","wbai","st","ta","ttd"];
 
 async function load(){
 
+  const res = await fetch(API);
+  const data = await res.json();
+
   let html="";
 
-  for(let c of coins){
+  watchlist.forEach(symbol => {
 
-    let data = await fetchPrice(c);
+    let coin = data.find(c => c.symbol.toLowerCase() === symbol);
 
-    if(!data){
-      html += `<div class="card">
-        <b>${c}</b><br>
-        ❌ No data found on CoinMarketCap<br>
-        <div class="small">Check if symbol exists or API key</div>
-      </div>`;
-      continue;
+    if(!coin){
+      html += `
+        <div class="card">
+          <b>${symbol.toUpperCase()}</b><br>
+          ❌ Not found on CoinGecko<br>
+          <div class="small">May not be listed or symbol is different</div>
+        </div>
+      `;
+      return;
     }
 
-    let score = Math.min(100, Math.abs(data.change)*8 + Math.random()*20);
+    let change = coin.price_change_percentage_24h || 0;
+    let volume = coin.total_volume;
 
-    let entry = (data.price * (1 - Math.random()*0.02)).toFixed(6);
-    let target = (data.price * (1 + Math.random()*0.05)).toFixed(6);
+    let score = Math.min(100, Math.abs(change)*6 + (volume/1e9));
 
-    let momentum = "";
+    let entry = (coin.current_price * (1 - Math.random()*0.03)).toFixed(6);
+    let target = (coin.current_price * (1 + Math.random()*0.06)).toFixed(6);
+
+    let signal = "";
     let color = "";
 
     if(score > 75){
-      momentum = "🚀 Strong Momentum";
+      signal = "🚀 Strong Momentum Zone";
       color = "green";
     }
     else if(score > 50){
-      momentum = "⚡ Watch Zone";
+      signal = "⚡ Watch Breakout";
       color = "orange";
     }
     else{
-      momentum = "⚠️ Weak Move";
+      signal = "⚠️ Weak Movement";
       color = "red";
     }
 
     html += `
       <div class="card">
-        <b>${c}</b><br><br>
+        <b>${coin.symbol.toUpperCase()}</b><br><br>
 
-        💰 Price: $${data.price.toFixed(6)}<br>
-        📊 24h: ${data.change.toFixed(2)}%<br><br>
+        💰 Price: $${coin.current_price}<br>
+        📊 24h: ${change.toFixed(2)}%<br>
+        📦 Volume: ${volume.toLocaleString()}<br><br>
 
         📍 Entry: $${entry}<br>
         🎯 Target: $${target}<br><br>
 
         Score: ${score.toFixed(1)}<br>
-        <span class="${color}">${momentum}</span><br><br>
+        <span class="${color}">${signal}</span><br><br>
 
-        <div class="small">Live data from CoinMarketCap</div>
+        <div class="small">Live data from CoinGecko</div>
       </div>
     `;
-  }
+  });
 
   document.getElementById("app").innerHTML = html;
 }
